@@ -25,6 +25,9 @@ class EligibilityService {
       if (criteriaValue.gt) {
         return cart[criteriaKey] > criteriaValue.gt;
       }
+      if (criteriaValue.lt) {
+        return cart[criteriaKey] < criteriaValue.lt;
+      }
 
       const criteriaValueString = criteriaValue.toString()
       const cartValueString = cart[criteriaKey].toString()

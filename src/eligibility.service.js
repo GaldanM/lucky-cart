@@ -31,7 +31,8 @@ class EligibilityService {
 		}
 
 		for (const [criteriaKey, criteriaValue] of Object.entries(criteria)) {
-			const isConditionFulfilled = this.checkCondition(criteriaKey, criteriaValue, cart[criteriaKey])
+			const cartValue = this.getNestedValue(cart, criteriaKey)
+			const isConditionFulfilled = this.checkCondition(criteriaKey, criteriaValue, cartValue)
 
 			if (!isConditionFulfilled) {
 				return false
@@ -42,7 +43,7 @@ class EligibilityService {
 	}
 
 	checkCondition(criteriaKey, criteriaValue, cartValue) {
-		if (cartValue === null) {
+		if (cartValue === null || cartValue === undefined) {
 			return false
 		}
 
@@ -92,6 +93,18 @@ class EligibilityService {
 			const isSubConditionFulfilled = this.checkCondition(subCriteriaKey, subCriteriaValue, cartValue)
 			return previousCondition || isSubConditionFulfilled
 		}, false)
+	}
+
+	getNestedValue(obj, path) {
+		const keys = path.split('.');
+		return keys.reduce((acc, key) => {
+			if (Array.isArray(acc)) {
+				return acc.reduce((subAcc, subObj) => {
+					return subObj[key] || subAcc;
+				}, null)
+			}
+			return acc && acc[key];
+		}, obj);
 	}
 }
 

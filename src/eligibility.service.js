@@ -8,8 +8,7 @@ class EligibilityService {
    * @return {boolean}
    */
   isEligible(cart, criteria) {
-    // TODO: compute cart eligibility here.
-    return false;
+    return Object.keys(criteria).length === 0;
   }
 }
 

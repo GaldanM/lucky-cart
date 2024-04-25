@@ -9,7 +9,7 @@ class EligibilityService {
    */
   isEligible(cart, criteria) {
     if (Object.keys(criteria).length === 0){
-      return false
+      return true
     }
 
     if (Object.keys(cart).length === 0) {
@@ -30,6 +30,9 @@ class EligibilityService {
       }
       if (criteriaValue.gte) {
         return cart[criteriaKey] >= criteriaValue.gte;
+      }
+      if (criteriaValue.lte) {
+        return cart[criteriaKey] <= criteriaValue.lte;
       }
 
       const criteriaValueString = criteriaValue.toString()

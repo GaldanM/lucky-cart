@@ -1,6 +1,7 @@
 class EligibilityService {
 	constructor() {
 		this.and = this.and.bind(this)
+		this.or = this.or.bind(this)
 		this.operatorMap = {
 			gt: this.gt,
 			gte: this.gte,
@@ -8,6 +9,7 @@ class EligibilityService {
 			lte: this.lte,
 			in: this.in,
 			and: this.and,
+			or: this.or,
 		}
 	}
 
@@ -83,6 +85,13 @@ class EligibilityService {
 			const isSubConditionFulfilled = this.checkCondition(subCriteriaKey, subCriteriaValue, cartValue)
 			return previousCondition && isSubConditionFulfilled
 		}, true)
+	}
+
+	or(cartValue, criteriaValue) {
+		return Object.entries(criteriaValue).reduce((previousCondition, [subCriteriaKey, subCriteriaValue]) => {
+			const isSubConditionFulfilled = this.checkCondition(subCriteriaKey, subCriteriaValue, cartValue)
+			return previousCondition || isSubConditionFulfilled
+		}, false)
 	}
 }
 

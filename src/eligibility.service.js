@@ -1,55 +1,91 @@
 class EligibilityService {
-  /**
-   * Compare cart data with criteria to compute eligibility.
-   * If all criteria are fulfilled then the cart is eligible (return true).
-   *
-   * @param cart
-   * @param criteria
-   * @return {boolean}
-   */
-  isEligible(cart, criteria) {
-    if (Object.keys(criteria).length === 0){
-      return true
-    }
+	constructor() {
+		this.and = this.and.bind(this)
+		this.operatorMap = {
+			gt: this.gt,
+			gte: this.gte,
+			lt: this.lt,
+			lte: this.lte,
+			in: this.in,
+			and: this.and,
+		}
+	}
 
-    if (Object.keys(cart).length === 0) {
-      return false
-    }
+	/**
+	 * Compare cart data with criteria to compute eligibility.
+	 * If all criteria are fulfilled then the cart is eligible (return true).
+	 *
+	 * @param cart
+	 * @param criteria
+	 * @return {boolean}
+	 */
+	isEligible(cart, criteria) {
+		if (Object.keys(criteria).length === 0) {
+			return true
+		}
 
+		if (Object.keys(cart).length === 0) {
+			return false
+		}
 
-    for (const [criteriaKey, criteriaValue] of Object.entries(criteria)) {
-      if (!cart[criteriaKey]) {
-        return false
-      }
+		for (const [criteriaKey, criteriaValue] of Object.entries(criteria)) {
+			const isConditionFulfilled = this.checkCondition(criteriaKey, criteriaValue, cart[criteriaKey])
 
-      if (criteriaValue.gt) {
-        return cart[criteriaKey] > criteriaValue.gt;
-      }
-      if (criteriaValue.lt) {
-        return cart[criteriaKey] < criteriaValue.lt;
-      }
-      if (criteriaValue.gte) {
-        return cart[criteriaKey] >= criteriaValue.gte;
-      }
-      if (criteriaValue.lte) {
-        return cart[criteriaKey] <= criteriaValue.lte;
-      }
-      if (criteriaValue.in) {
-        return criteriaValue.in.includes(cart[criteriaKey]);
-      }
+			if (!isConditionFulfilled) {
+				return false
+			}
+		}
 
-      const criteriaValueString = criteriaValue.toString()
-      const cartValueString = cart[criteriaKey].toString()
+		return true
+	}
 
-      if (criteriaValueString !== cartValueString) {
-        return false
-      }
-    }
+	checkCondition(criteriaKey, criteriaValue, cartValue) {
+		if (cartValue === null) {
+			return false
+		}
 
-    return true
-  }
+		const isCriteriaKeyAnOperator = Boolean(this.operatorMap[criteriaKey])
+		if (isCriteriaKeyAnOperator) {
+			return this.operatorMap[criteriaKey](cartValue, criteriaValue)
+		}
+
+		const isCriteriaValueAnObject = typeof criteriaValue === 'object'
+		if (isCriteriaValueAnObject) {
+			const [subCriteriaKey, subCriteriaValue] = Object.entries(criteriaValue)[0]
+			return this.checkCondition(subCriteriaKey, subCriteriaValue, cartValue)
+		}
+
+		return criteriaValue.toString() === cartValue.toString();
+	}
+
+	gt(cartValue, criteriaValue) {
+		return cartValue > criteriaValue;
+	}
+
+	gte(cartValue, criteriaValue) {
+		return cartValue >= criteriaValue;
+	}
+
+	lt(cartValue, criteriaValue) {
+		return cartValue < criteriaValue;
+	}
+
+	lte(cartValue, criteriaValue) {
+		return cartValue <= criteriaValue;
+	}
+
+	in(cartValue, criteriaValue) {
+		return criteriaValue.includes(cartValue);
+	}
+
+	and(cartValue, criteriaValue) {
+		return Object.entries(criteriaValue).reduce((previousCondition, [subCriteriaKey, subCriteriaValue]) => {
+			const isSubConditionFulfilled = this.checkCondition(subCriteriaKey, subCriteriaValue, cartValue)
+			return previousCondition && isSubConditionFulfilled
+		}, true)
+	}
 }
 
 module.exports = {
-  EligibilityService,
+	EligibilityService,
 };

@@ -34,6 +34,9 @@ class EligibilityService {
       if (criteriaValue.lte) {
         return cart[criteriaKey] <= criteriaValue.lte;
       }
+      if (criteriaValue.in) {
+        return criteriaValue.in.includes(cart[criteriaKey]);
+      }
 
       const criteriaValueString = criteriaValue.toString()
       const cartValueString = cart[criteriaKey].toString()

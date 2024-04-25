@@ -8,7 +8,29 @@ class EligibilityService {
    * @return {boolean}
    */
   isEligible(cart, criteria) {
-    return Object.keys(criteria).length === 0;
+    if (Object.keys(criteria).length === 0){
+      return false
+    }
+
+    if (Object.keys(cart).length === 0) {
+      return false
+    }
+
+
+    for (const [criteriaKey, criteriaValue] of Object.entries(criteria)) {
+      if (!cart[criteriaKey]) {
+        return false
+      }
+
+      const criteriaValueString = criteriaValue.toString()
+      const cartValueString = cart[criteriaKey].toString()
+
+      if (criteriaValueString !== cartValueString) {
+        return false
+      }
+    }
+
+    return true
   }
 }
 

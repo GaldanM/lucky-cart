@@ -313,6 +313,20 @@ describe('Eligibility', () => {
 			const actualEligibility = eligibilityService.isEligible(cart, criteria);
 			should(actualEligibility).be.false();
 		});
+		it('should be eligible when array sub object condition with two sub elements is fulfilled for second element', () => {
+			const cart = { products: [{ quantity: { available: 2 } }, { quantity: { available: 3 } }] };
+			const criteria = { 'products.quantity.available': 3 };
+			const eligibilityService = new EligibilityService();
+			const actualEligibility = eligibilityService.isEligible(cart, criteria);
+			should(actualEligibility).be.true();
+		});
+		it('should be eligible when array sub object operation condition with two sub elements is fulfilled for second element', () => {
+			const cart = { products: [{ quantity: { available: 2 } }, { quantity: { available: 3 } }] };
+			const criteria = { 'products.quantity.available': { in: [2]} };
+			const eligibilityService = new EligibilityService();
+			const actualEligibility = eligibilityService.isEligible(cart, criteria);
+			should(actualEligibility).be.true();
+		});
 	});
 
 	describe('Complex cases', () => {

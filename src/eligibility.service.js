@@ -1,7 +1,10 @@
 class EligibilityService {
+	nestedObjectRegexp = new RegExp(/(\w+\.)+\w+/)
+
 	constructor() {
 		this.and = this.and.bind(this)
 		this.or = this.or.bind(this)
+		this.getNestedValues = this.getNestedValues.bind(this)
 		this.operatorMap = {
 			gt: this.gt,
 			gte: this.gte,
@@ -31,8 +34,21 @@ class EligibilityService {
 		}
 
 		for (const [criteriaKey, criteriaValue] of Object.entries(criteria)) {
-			const cartValue = this.getNestedValue(cart, criteriaKey)
-			const isConditionFulfilled = this.checkCondition(criteriaKey, criteriaValue, cartValue)
+			const isCriteriaKeyNested = this.nestedObjectRegexp.test(criteriaKey)
+
+			let isConditionFulfilled
+			if (isCriteriaKeyNested) {
+				const newCriteriaKey = criteriaKey.replaceAll(".", "_")
+				const newCartValues = this.getNestedValues(criteriaKey.split("."), cart)
+
+				if (newCartValues.length === 0) {
+					return false
+				}
+
+				isConditionFulfilled = this.checkCondition(newCriteriaKey, criteriaValue, newCartValues)
+			} else {
+				isConditionFulfilled = this.checkCondition(criteriaKey, criteriaValue, cart[criteriaKey])
+			}
 
 			if (!isConditionFulfilled) {
 				return false
@@ -43,8 +59,13 @@ class EligibilityService {
 	}
 
 	checkCondition(criteriaKey, criteriaValue, cartValue) {
-		if (cartValue === null || cartValue === undefined) {
+		if (cartValue === null) {
 			return false
+		}
+
+		const isCartValueAnArray = Array.isArray(cartValue)
+		if (isCartValueAnArray) {
+			return cartValue.some(cartValueItem => this.checkCondition(criteriaKey, criteriaValue, cartValueItem))
 		}
 
 		const isCriteriaKeyAnOperator = Boolean(this.operatorMap[criteriaKey])
@@ -54,7 +75,7 @@ class EligibilityService {
 
 		const isCriteriaValueAnObject = typeof criteriaValue === 'object'
 		if (isCriteriaValueAnObject) {
-			const [subCriteriaKey, subCriteriaValue] = Object.entries(criteriaValue)[0]
+			const [[subCriteriaKey, subCriteriaValue]] = Object.entries(criteriaValue)
 			return this.checkCondition(subCriteriaKey, subCriteriaValue, cartValue)
 		}
 
@@ -95,16 +116,28 @@ class EligibilityService {
 		}, false)
 	}
 
-	getNestedValue(obj, path) {
-		const keys = path.split('.');
-		return keys.reduce((acc, key) => {
-			if (Array.isArray(acc)) {
-				return acc.reduce((subAcc, subObj) => {
-					return subObj[key] || subAcc;
-				}, null)
-			}
-			return acc && acc[key];
-		}, obj);
+	getNestedValues(object, keys) {
+		const [firstKey] = keys
+
+		const value = object[firstKey]
+		if (value === undefined) {
+			return []
+		}
+
+		if (Array.isArray(value)) {
+			return value.reduce((acc, subObj) => [...acc, ...this.getNestedValues(subObj, keys.slice(1))], [])
+		}
+
+		if (typeof value === 'object') {
+			return this.getNestedValues(value, keys.slice(1))
+		}
+
+		const isLastPath = keys.length === 1
+		if (!isLastPath) {
+			return []
+		}
+
+		return [value]
 	}
 }
 

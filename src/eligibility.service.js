@@ -132,8 +132,8 @@ class EligibilityService {
 			return this.getNestedValues(value, keys.slice(1))
 		}
 
-		const isLastPath = keys.length === 1
-		if (!isLastPath) {
+		const isLastKey = keys.length === 1
+		if (!isLastKey) {
 			return []
 		}
 
